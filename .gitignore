@@ -1,0 +1,37 @@
+############################
+# Runtime data
+############################
+
+# SQLite DB files
+teleswitch/db/*.db
+
+# Logs
+teleswitch/logs/
+*.log
+
+# Recordings
+teleswitch/recordings/
+
+############################
+# RPM binaries (very important)
+############################
+teleswitch/rpms/
+
+############################
+# Backup files
+############################
+*.bak*
+*.swp
+
+############################
+# Env files
+############################
+.env
+.env.*
+
+############################
+# OS files
+############################
+.DS_Store
+Thumbs.db
+

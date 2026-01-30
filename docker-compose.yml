@@ -1,0 +1,42 @@
+#version: "3.9"
+
+services:
+  teleswitch:
+    image: teleswitch:9.4-prod
+    build:
+      context: ./teleswitch
+      dockerfile: Dockerfile
+
+    container_name: teleswitch_alma_new
+    restart: unless-stopped
+    environment:
+      TELE_HOME: /home/teleswitch/teleswitch
+      TELE_CONF: /home/teleswitch/teleswitch/etc/teleswitch
+      TELE_LOG: /home/teleswitch/teleswitch/var/log/teleswitch
+
+      EXTERNAL_SIP_IP: 192.168.1.100
+      EXTERNAL_RTP_IP: 192.168.1.100
+      RTP_START_PORT: 18000
+      RTP_END_PORT: 18005
+      MAX_SESSIONS: 1000
+      SESSION_RATE: 200
+    ports:
+      - "5070:5060/udp"
+      - "5070:5060/tcp"
+      - "8022:8021/tcp"
+      - "18000-18005:18000-18005/udp"
+
+    volumes:
+      - ./teleswitch/config:/home/teleswitch/teleswitch/etc/teleswitch:ro
+      - ./teleswitch/logs:/home/teleswitch/teleswitch/var/log/teleswitch
+      - ./teleswitch/db:/var/lib/freeswitch/db
+      - ./teleswitch/recordings:/var/lib/freeswitch/recordings
+
+    cap_add:
+      - SYS_NICE
+
+    ulimits:
+      rtprio: 65353
+      nofile:
+        soft: 1048576
+        hard: 1048576
