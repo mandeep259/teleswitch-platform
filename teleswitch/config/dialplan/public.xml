@@ -48,7 +48,10 @@
 	<action application="transfer" data="$1 XML default"/>
       </condition>
     </extension>
-    
+
+    <!-- it need in futire for teleplivo -->
+	      <!--    <action application="socket" data="teleplivo:8084 async full"/> -->
+
     <!--
 	You can place files in the public directory to get included.
     -->

@@ -100,10 +100,13 @@ EXPOSE 5060/udp 5060/tcp 8021/tcp 17000-22000/udp
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+COPY healthcheck.sh /usr/local/bin/healthcheck.sh
+RUN chmod +x /usr/local/bin/healthcheck.sh
+
 USER teleswitch
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+HEALTHCHECK --interval=15s --timeout=5s --retries=5 \
   CMD /usr/local/bin/healthcheck.sh || exit 1
 
