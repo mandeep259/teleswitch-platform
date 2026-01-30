@@ -23,9 +23,10 @@ services:
     ports:
       - "5070:5060/udp"
       - "5070:5060/tcp"
-      - "8022:8021/tcp"
+        #     - "8022:8021/tcp"
       - "18000-18005:18000-18005/udp"
-
+    expose:
+      - "8021"
     volumes:
       - ./teleswitch/config:/home/teleswitch/teleswitch/etc/teleswitch:ro
       - ./teleswitch/logs:/home/teleswitch/teleswitch/var/log/teleswitch
