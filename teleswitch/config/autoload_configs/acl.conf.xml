@@ -18,6 +18,7 @@
     <list name="event_socket_acl" default="deny">
 	<node type="allow" cidr="127.0.0.1/32"/>
   	<node type="allow" cidr="172.17.0.0/16"/>
+  	<node type="allow" cidr="172.20.0.0/16"/>
     </list>
 
     <!--

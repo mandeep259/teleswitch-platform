@@ -23,9 +23,10 @@ services:
     ports:
       - "5070:5060/udp"
       - "5070:5060/tcp"
-      - "8022:8021/tcp"
+        #     - "8022:8021/tcp"
       - "18000-18005:18000-18005/udp"
-
+    expose:
+      - "8021"
     volumes:
       - ./teleswitch/config:/home/teleswitch/teleswitch/etc/teleswitch:ro
       - ./teleswitch/logs:/home/teleswitch/teleswitch/var/log/teleswitch
@@ -40,3 +41,53 @@ services:
       nofile:
         soft: 1048576
         hard: 1048576
+    networks:
+      - sip_network
+---
+#version: '3.8'
+
+services:
+
+  teleplivo:
+    build: ./teleplivo
+    container_name: teleplivo
+    restart: always
+
+    ports:
+      - "8085:8085"
+
+    env_file:
+      - .env
+
+    environment:
+      FREESWITCH_IP: teleswitch
+      FREESWITCH_PORT: 8021
+
+    volumes:
+      - ./teleplivo/config:/config
+
+    ulimits:
+      nofile:
+        soft: 500000
+        hard: 500000
+
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+
+            #    depends_on:
+            #      - teleswitch
+    depends_on:
+      teleswitch:
+        condition: service_healthy
+
+    networks:
+      - sip_network
+
+
+networks:
+  sip_network:
+    driver: bridge
+
