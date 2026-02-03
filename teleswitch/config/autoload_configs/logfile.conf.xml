@@ -7,7 +7,7 @@
     <profile name="default">
       <settings>
         <!-- File to log to -->
-	      <param name="logfile" value="/var/log/teleswitch/teleswitch.log"/>
+	      <param name="logfile" value="/home/teleswitch/teleswitch/var/log/teleswitch/teleswitch.log"/>
 	      <param name="rotate-on-hup" value="true"/>
 	      <param name="maximum-rotate" value="10"/>
               <param name="rollover-size" value="10000000"/>

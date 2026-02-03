@@ -1,5 +1,5 @@
 # ============================================================
-# Stage 1: Builder (install RPMs exactly like vendor system)
+# Stage 1: Builder (Install Vendor RPMs Deterministically)
 # ============================================================
 FROM almalinux:9 AS builder
 
@@ -11,42 +11,50 @@ WORKDIR /build
 RUN dnf -y install epel-release dnf-plugins-core && \
     dnf config-manager --set-enabled crb
 
-# Base build deps (needed by RPMs)
+# Base dependencies required by vendor RPMs
 RUN dnf -y install \
         lame lame-devel \
         speex speex-devel \
         speexdsp speexdsp-devel \
-        gdbm gdbm-devel \
+#        gdbm gdbm-devel \
         libedit libjpeg-turbo \
-        zlib libzstd \
+        zlib libzstd libwebp \
     && dnf clean all
 
-# Copy RPMs from host
+# Copy vendor RPMs
 COPY rpms/deps /build/rpms/deps
 COPY rpms/updated /build/rpms/updated
 
-# Install dependency RPMs
-RUN dnf -y localinstall /build/rpms/deps/*.rpm --skip-broken
+# Count expected RPMs
+RUN ls /build/rpms/deps/*.rpm /build/rpms/updated/*.rpm | wc -l > /tmp/rpm_expected.txt
 
-# Install teleswitch / freeswitch RPMs
-RUN dnf -y localinstall /build/rpms/updated/*.rpm --skip-broken \
-    && dnf clean all
+# Install RPMs (NO silent trust)
+RUN dnf -y localinstall /build/rpms/deps/*.rpm  && \
+    dnf -y localinstall /build/rpms/updated/*.rpm  && \
+    dnf clean all
 
-# Sanity check (REAL binary)
+# Verify core binary exists
 RUN test -x /home/teleswitch/teleswitch/usr/bin/freeswitch
 
-# Create teleswitch alias (branding only)
+# Verify no missing shared libraries
+RUN ldd /home/teleswitch/teleswitch/usr/bin/freeswitch | grep "not found" && exit 1 || true
+
+# Verify critical modules exist
+RUN test -f /home/teleswitch/teleswitch/usr/lib64/teleswitch/mod/mod_sofia.so
+
+# Create teleswitch alias (branding)
 RUN ln -s /home/teleswitch/teleswitch/usr/bin/freeswitch \
           /home/teleswitch/teleswitch/usr/bin/teleswitch
 
+
 # ============================================================
-# Stage 2: Runtime (minimal + deterministic)
+# Stage 2: Runtime (Minimal + Deterministic)
 # ============================================================
 FROM almalinux:9
 
 LABEL maintainer="Mandeep <mandeep259@dummy.com>"
 
-# Runtime-only dependencies
+# Runtime-only libraries
 RUN dnf -y install epel-release dnf-plugins-core && \
     dnf config-manager --set-enabled crb && \
     dnf -y install \
@@ -56,12 +64,13 @@ RUN dnf -y install epel-release dnf-plugins-core && \
         ca-certificates \
     && dnf clean all
 
-# Non-root user
+# Create non-root user
 RUN useradd -r -u 10001 teleswitch
 
-# Copy vendor tree
+# Copy vendor application tree
 COPY --from=builder /home/teleswitch/teleswitch /home/teleswitch/teleswitch
-# ---- REQUIRED runtime shared libraries ----
+
+# Copy required shared libs from builder
 COPY --from=builder /lib64/libspandsp.so.3 /lib64/
 COPY --from=builder /lib64/libsofia-sip-ua.so.0 /lib64/
 COPY --from=builder /lib64/libodbc.so.2 /lib64/
@@ -73,7 +82,7 @@ COPY --from=builder /lib64/libz.so.1 /lib64/
 COPY --from=builder /lib64/libzstd.so.1 /lib64/
 COPY --from=builder /lib64/libltdl.so.7 /lib64/
 
-# Register vendor libs
+# Register vendor lib path
 RUN echo "/home/teleswitch/teleswitch/usr/lib64" \
       > /etc/ld.so.conf.d/teleswitch.conf && ldconfig
 
@@ -94,11 +103,17 @@ ENV TELE_HOME=/home/teleswitch/teleswitch \
     PATH="/home/teleswitch/teleswitch/usr/bin:${PATH}"
 
 # Ports
-EXPOSE 5060/udp 5060/tcp 8021/tcp 17000-22000/udp
+EXPOSE 5060/udp
+EXPOSE 5060/tcp
+EXPOSE 8021/tcp
+EXPOSE 17000-22000/udp
 
 # Entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+COPY healthcheck.sh /usr/local/bin/healthcheck.sh
+
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+    && chmod +x /usr/local/bin/healthcheck.sh
 
 COPY healthcheck.sh /usr/local/bin/healthcheck.sh
 RUN chmod +x /usr/local/bin/healthcheck.sh
@@ -109,4 +124,3 @@ ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 HEALTHCHECK --interval=15s --timeout=5s --retries=5 \
   CMD /usr/local/bin/healthcheck.sh || exit 1
-
