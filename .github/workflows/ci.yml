@@ -1,0 +1,27 @@
+name: Pre-commit Quality Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pre-commit
+          # If your docker-compose hook needs docker to run:
+          # Docker is pre-installed on ubuntu-latest runners.
+
+      - name: Run Pre-commit
+        run: pre-commit run --all-files --show-diff-on-failure
