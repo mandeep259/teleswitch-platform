@@ -43,10 +43,6 @@ services:
         hard: 1048576
     networks:
       - sip_network
----
-#version: '3.8'
-
-services:
 
   teleplivo:
     build: ./teleplivo
@@ -90,4 +86,3 @@ services:
 networks:
   sip_network:
     driver: bridge
-
