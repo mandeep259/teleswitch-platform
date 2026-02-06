@@ -9,4 +9,3 @@ exec /home/teleswitch/teleswitch/usr/bin/freeswitch \
   -conf /home/teleswitch/teleswitch/etc/teleswitch \
   -log /home/teleswitch/teleswitch/var/log/teleswitch \
   -db /var/lib/freeswitch/db
-

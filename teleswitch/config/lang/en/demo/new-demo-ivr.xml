@@ -35,7 +35,7 @@
 
   <!-- The following macro is the same as new_demo_ivr_main_menu except it is the "short" version -->
   <!-- The short version has all the options but not the initial greeting -->
-  <macro name="new_demo_ivr_main_menu_short" pause="100"> 
+  <macro name="new_demo_ivr_main_menu_short" pause="100">
     <input pattern="(.*)">
       <match>
         <!-- Menu option 1: For information about FreeSWITCH... -->
