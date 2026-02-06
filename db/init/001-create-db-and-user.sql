@@ -1,0 +1,7 @@
+CREATE DATABASE IF NOT EXISTS kamailio;
+
+CREATE USER IF NOT EXISTS 'kamailio'@'%' IDENTIFIED BY 'kamailio';
+
+GRANT ALL PRIVILEGES ON kamailio.* TO 'kamailio'@'%';
+
+FLUSH PRIVILEGES;
