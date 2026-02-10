@@ -2,12 +2,13 @@
 
 services:
   teleswitch:
-    image: teleswitch:9.4-prod
+    # If IMAGE_TAG is set, use the GHCR image, else use local default
+    image: ${TELESWITCH_IMAGE:-teleswitch:9.4-prod}
     build:
       context: ./teleswitch
       dockerfile: Dockerfile
-
     container_name: teleswitch_alma_new
+
     restart: unless-stopped
     environment:
       TELE_HOME: /home/teleswitch/teleswitch
@@ -44,11 +45,13 @@ services:
     networks:
       - sip_network
 
+
   teleplivo:
+    image: ${TELEPLIVO_IMAGE:-teleplivo:latest}
     build: ./teleplivo
     container_name: teleplivo
-    restart: always
 
+    restart: always
     ports:
       - "8085:8085"
 
