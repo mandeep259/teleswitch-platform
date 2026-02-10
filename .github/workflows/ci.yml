@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main, develop]
   push:
-    branches: [main]
+    branches: [main, "kamailio/*"] # This will trigger on any branch starting with kamailio/
 
 jobs:
   quality-gate:
