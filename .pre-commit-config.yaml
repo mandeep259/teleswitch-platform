@@ -9,6 +9,7 @@ repos:
       - id: detect-private-key       # New: Security
         exclude: ^teleswitch/config/tls/.*\.pem$
       - id: check-added-large-files  # New: Performance
+        args: ['--maxkb=10240']  # Increase limit to 10MB
 
   - repo: https://github.com/koalaman/shellcheck-precommit
     rev: v0.10.0
