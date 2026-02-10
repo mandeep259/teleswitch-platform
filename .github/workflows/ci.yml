@@ -33,14 +33,12 @@ jobs:
         service: [teleswitch, teleplivo]
     steps:
       - uses: actions/checkout@v4
-
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -49,7 +47,6 @@ jobs:
           tags: |
             type=sha,format=short
             type=ref,event=branch
-
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -65,15 +62,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Fix Runner Permissions for CI
+        # This fixes the 'Cannot open pid file' error by ensuring the runner folders
+        # are writable by the container's non-root user (10001)
+        run: |
+          mkdir -p teleswitch/logs teleswitch/db teleswitch/recordings
+          chmod -R 777 teleswitch/logs teleswitch/db teleswitch/recordings
+
       - name: Materialize Environment
         run: |
-          # 1. Start with production secrets
           echo "${{ secrets.PLATFORM_ENV_FILE }}" > .env
 
-          # 2. Add dynamic image variables
+          # CI-Specific Overrides
+          echo "EXTERNAL_SIP_IP=127.0.0.1" >> .env
+          echo "EXTERNAL_RTP_IP=127.0.0.1" >> .env
+
           SHORT_SHA=$(git rev-parse --short HEAD)
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-
           echo "TELESWITCH_IMAGE=ghcr.io/${REPO_LOWER}/teleswitch:sha-${SHORT_SHA}" >> .env
           echo "TELEPLIVO_IMAGE=ghcr.io/${REPO_LOWER}/teleplivo:sha-${SHORT_SHA}" >> .env
 
@@ -83,7 +88,8 @@ jobs:
       - name: Wait for Healthchecks
         run: |
           echo "Waiting for Teleswitch and Teleplivo health status..."
-          timeout 120s bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} teleswitch_alma_new)" == "healthy" ] && [ "$(docker inspect -f {{.State.Health.Status}} teleplivo)" == "healthy" ]; do sleep 5; done'
+          # Increased timeout for cloud environment
+          timeout 180s bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} teleswitch_alma_new)" == "healthy" ] && [ "$(docker inspect -f {{.State.Health.Status}} teleplivo)" == "healthy" ]; do sleep 5; done'
 
       - name: Final Smoke Test
         run: |
