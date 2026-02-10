@@ -1,4 +1,4 @@
-name: Pre-commit Quality Check
+name: Platform CI Pipeline
 
 on:
   pull_request:
@@ -11,20 +11,86 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install dependencies
-        run: |
-          pip install pre-commit
-          # If your docker-compose hook needs docker to run:
-          # Docker is pre-installed on ubuntu-latest runners.
-
+        run: pip install pre-commit
       - name: Create dummy .env for validation
         run: touch .env
-
       - name: Run Pre-commit
         run: pre-commit run --all-files --show-diff-on-failure
+
+  build-and-store:
+    needs: quality-gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [teleswitch, teleplivo]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
+          tags: |
+            type=sha,format=short
+            type=ref,event=branch
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  integration-test:
+    needs: build-and-store
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Materialize Environment
+        run: echo "${{ secrets.PLATFORM_ENV_FILE }}" > .env
+
+      - name: Inject GHCR Images into Compose
+        run: |
+          # Replace local build/image names with the specific GHCR images just built
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+
+          sed -i "s|image: teleswitch:9.4-prod|image: ghcr.io/${REPO_LOWER}/teleswitch:sha-${SHORT_SHA}|g" docker-compose.yml
+          # We remove the 'build:' lines so it pulls the image instead of trying to rebuild
+          sed -i '/build:/d' docker-compose.yml
+          sed -i "s|image: teleplivo|image: ghcr.io/${REPO_LOWER}/teleplivo:sha-${SHORT_SHA}|g" docker-compose.yml
+
+      - name: Start Stack
+        run: docker compose up -d
+
+      - name: Wait for Healthchecks
+        run: |
+          echo "Waiting for Teleswitch and Teleplivo health status..."
+          # This relies on the HEALTHCHECK --interval in your Dockerfiles
+          timeout 120s bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} teleswitch_alma_new)" == "healthy" ] && [ "$(docker inspect -f {{.State.Health.Status}} teleplivo)" == "healthy" ]; do sleep 5; done'
+
+      - name: Final Smoke Test
+        run: |
+          echo "Verifying API availability..."
+          curl -f http://localhost:8085/management/health || curl -f http://localhost:8085/actuator/health
+
+      - name: Cleanup & Logs on Failure
+        if: failure()
+        run: |
+          docker compose logs
+          docker ps -a
