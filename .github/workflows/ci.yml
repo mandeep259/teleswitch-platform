@@ -88,8 +88,16 @@ jobs:
       - name: Wait for Healthchecks
         run: |
           echo "Waiting for Teleswitch and Teleplivo health status..."
-          # Increased timeout for cloud environment
-          timeout 180s bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} teleswitch_alma_new)" == "healthy" ] && [ "$(docker inspect -f {{.State.Health.Status}} teleplivo)" == "healthy" ]; do sleep 5; done'
+
+      - name: Wait for Healthchecks
+        run: |
+          echo "Waiting for Teleswitch and Teleplivo health status..."
+          timeout 180s bash -c '
+          until [ "$(docker inspect -f {{.State.Health.Status}} teleswitch_alma_new)" == "healthy" ] && \
+                [ "$(docker inspect -f {{.State.Health.Status}} teleplivo)" == "healthy" ]; do
+            echo "Waiting for health... Teleswitch: $(docker inspect -f {{.State.Health.Status}} teleswitch_alma_new) | Teleplivo: $(docker inspect -f {{.State.Health.Status}} teleplivo)"
+            sleep 10
+          done'
 
       - name: Final Smoke Test
         run: |
