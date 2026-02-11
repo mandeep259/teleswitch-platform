@@ -1,19 +1,12 @@
-# Teleswitch Platform
+# 📡 Teleswitch Platform
+
+[![Pre-commit Quality Check](https://github.com/your-username/teleswitch-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/teleswitch-platform/actions)
 
 A high-performance VoIP switching platform powered by **Kamailio** and **FreeSWITCH**.
 
-## Features
-* **Kamailio SIP Proxy:** Core routing and load balancing.
-* **Security:** Integrated CI/CD quality gates for configuration validation.
-* **Dockerized:** Fully containerized setup for easy deployment.
-
-## CI/CD Pipeline
-This repository uses a **Pre-commit Quality Gate**. Every push to `main` is validated for:
-* YAML/Shell script syntax.
-* Secrets/Private key detection.
-* Formatting (Trailing whitespace & End-of-file).
-
-## Getting Started
-1. Install pre-commit: `pip install pre-commit`
-2. Initialize hooks: `pre-commit install`
-3. Run locally: `docker-compose up -d`
+## 🚀 Quick Start
+```bash
+git clone [https://github.com/your-username/teleswitch-platform.git](https://github.com/your-username/teleswitch-platform.git)
+cd teleswitch-platform
+pip install pre-commit && pre-commit install
+docker compose up -d
