@@ -102,7 +102,7 @@ jobs:
       - name: Final Smoke Test
         run: |
           echo "Verifying API availability..."
-          curl -f http://localhost:8085/management/health || curl -f http://localhost:8085/actuator/health
+          curl -f curl -f http://localhost:8085/actuator/health
 
       - name: Cleanup & Logs on Failure
         if: failure()
