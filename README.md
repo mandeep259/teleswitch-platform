@@ -1,12 +1,14 @@
 # 📡 Teleswitch Platform
 
-[![Pre-commit Quality Check](https://github.com/your-username/teleswitch-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/teleswitch-platform/actions)
+[![Platform CI Pipeline](https://github.com/mandeep259/teleswitch-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/mandeep259/teleswitch-platform/actions)
 
-A high-performance VoIP switching platform powered by **Kamailio** and **FreeSWITCH**.
+A high-performance VoIP switching platform powered by **Kamailio** and **FreeSWITCH**, orchestrated with Docker and protected by a robust CI/CD pipeline.
 
 ## 🚀 Quick Start
-```bash
-git clone [https://github.com/your-username/teleswitch-platform.git](https://github.com/your-username/teleswitch-platform.git)
-cd teleswitch-platform
-pip install pre-commit && pre-commit install
-docker compose up -d
+
+1. **Clone & Setup Hooks**
+   ```bash
+   git clone [https://github.com/mandeep259/teleswitch-platform.git](https://github.com/mandeep259/teleswitch-platform.git)
+   cd teleswitch-platform
+   # Install hooks to ensure quality before pushing
+   pip install pre-commit && pre-commit install
