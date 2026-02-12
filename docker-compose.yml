@@ -87,7 +87,44 @@ services:
     networks:
       - sip_network
 
+kamailio-db:
+    image: mariadb:10.11
+    container_name: kamailio-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: telemune@2026#
+      MYSQL_DATABASE: kamailio
+      MYSQL_USER: kamailio
+      MYSQL_PASSWORD: kamailio
+    volumes:
+      - kamailio_db_data:/var/lib/mysql
+      - ./kamailio/db_init:/docker-entrypoint-initdb.d:ro  # <--- AUTO INIT
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "kamailio", "-pkamailio"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sip_network
 
+volumes:
+  kamailio_db_data:  # Persistent storage for your DB
+
+kamailio:
+    image: ${KAMAILIO_IMAGE:-kamailio/kamailio:5.8-alpine}
+    build: ./kamailio
+    container_name: kamailio
+    restart: unless-stopped
+    environment:
+      - DB_URL=mysql://kamailio:kamailio@kamailio-db:3306/kamailio
+    ports:
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+    depends_on:
+      kamailio-db:
+        condition: service_healthy
+    networks:
+      - sip_network
 
 networks:
   sip_network:
