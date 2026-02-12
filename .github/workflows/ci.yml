@@ -30,7 +30,8 @@ jobs:
       packages: write
     strategy:
       matrix:
-        service: [teleswitch, teleplivo]
+        # Added kamailio to the build matrix
+        service: [teleswitch, teleplivo, kamailio]
     steps:
       - uses: actions/checkout@v4
       - name: Log in to GHCR
@@ -39,6 +40,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -50,6 +52,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -66,8 +69,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Fix Runner Permissions for CI
-        # This fixes the 'Cannot open pid file' error by ensuring the runner folders
-        # are writable by the container's non-root user (10001)
         run: |
           mkdir -p teleswitch/logs teleswitch/db teleswitch/recordings
           chmod -R 777 teleswitch/logs teleswitch/db teleswitch/recordings
@@ -75,8 +76,6 @@ jobs:
       - name: Materialize Environment
         run: |
           echo "${{ secrets.PLATFORM_ENV_FILE }}" > .env
-
-          # CI-Specific Overrides
           echo "EXTERNAL_SIP_IP=127.0.0.1" >> .env
           echo "EXTERNAL_RTP_IP=127.0.0.1" >> .env
 
@@ -84,28 +83,25 @@ jobs:
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "TELESWITCH_IMAGE=ghcr.io/${REPO_LOWER}/teleswitch:sha-${SHORT_SHA}" >> .env
           echo "TELEPLIVO_IMAGE=ghcr.io/${REPO_LOWER}/teleplivo:sha-${SHORT_SHA}" >> .env
+          echo "KAMAILIO_IMAGE=ghcr.io/${REPO_LOWER}/kamailio:sha-${SHORT_SHA}" >> .env
 
       - name: Start Stack
         run: docker compose up -d
 
       - name: Wait for Healthchecks
         run: |
-          echo "Waiting for Teleswitch and Teleplivo health status..."
-
-      - name: Wait for Healthchecks
-        run: |
-          echo "Waiting for Teleswitch and Teleplivo health status..."
+          echo "Waiting for Services (Teleswitch, Teleplivo, Kamailio-DB) health status..."
           timeout 180s bash -c '
           until [ "$(docker inspect -f {{.State.Health.Status}} teleswitch_alma_new)" == "healthy" ] && \
-                [ "$(docker inspect -f {{.State.Health.Status}} teleplivo)" == "healthy" ]; do
-            echo "Waiting for health... Teleswitch: $(docker inspect -f {{.State.Health.Status}} teleswitch_alma_new) | Teleplivo: $(docker inspect -f {{.State.Health.Status}} teleplivo)"
+                [ "$(docker inspect -f {{.State.Health.Status}} teleplivo)" == "healthy" ] && \
+                [ "$(docker inspect -f {{.State.Health.Status}} kamailio-db)" == "healthy" ]; do
             sleep 10
           done'
 
       - name: Final Smoke Test
         run: |
           echo "Verifying API availability..."
-          curl -f curl -f http://localhost:8085/actuator/health
+          curl -f http://localhost:8085/actuator/health
 
       - name: Cleanup & Logs on Failure
         if: failure()

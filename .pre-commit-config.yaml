@@ -20,7 +20,8 @@ repos:
     hooks:
       - id: kamailio-syntax-check
         name: Kamailio Syntax Check
-        entry: docker run --entrypoint kamailio kamailio/kamailio:5.8-alpine -c -f /etc/kamailio/kamailio.cfg
+          # entry: docker run --entrypoint kamailio kamailio/kamailio:5.8-alpine -c -f /etc/kamailio/kamailio.cfg
+        entry: docker run --rm -v $(pwd)/kamailio:/etc/kamailio:ro kamailio/kamailio:5.8-alpine -c -f /etc/kamailio/kamailio.cfg
         language: system
         files: ^teleswitch/config/kamailio\.cfg$
         pass_filenames: false

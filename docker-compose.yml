@@ -102,6 +102,11 @@ services:
         condition: service_healthy
     networks:
       - sip_network
+    healthcheck:
+      test: ["CMD", "kamcmd", "core.ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 networks:
   sip_network:
