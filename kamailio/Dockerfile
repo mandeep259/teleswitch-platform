@@ -3,11 +3,13 @@ FROM kamailio/kamailio-ci:5.4.3-alpine
 WORKDIR /etc/kamailio
 
 RUN apk add --no-cache \
+    kamailio-mysql \
     bash \
     curl \
     iputils \
     net-tools \
     tcpdump
+
 
 # Copy config from correct directory
 COPY config/kamailio.cfg /etc/kamailio/kamailio.cfg

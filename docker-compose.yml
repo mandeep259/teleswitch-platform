@@ -7,7 +7,7 @@ services:
     build:
       context: ./teleswitch
       dockerfile: Dockerfile
-    container_name: teleswitch_alma_new
+    container_name: teleswitch
     restart: unless-stopped
     environment:
       TELE_HOME: /home/teleswitch/teleswitch
@@ -37,6 +37,14 @@ services:
       nofile:
         soft: 1048576
         hard: 1048576
+
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
     networks:
       - sip_network
 
@@ -88,10 +96,16 @@ services:
       - sip_network
 
   kamailio:
-    image: ${KAMAILIO_IMAGE:-kamailio/kamailio:5.8-alpine}
+    #    image: ${KAMAILIO_IMAGE:-kamailio/kamailio:5.8-alpine}
     build: ./kamailio
     container_name: kamailio
     restart: unless-stopped
+    # Use -DD to keep it in foreground and -E to log to stderr
+    #    command: ["kamailio", "-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
+    # command: kamailio -DD -E -f /etc/kamailio/kamailio.cfg
+    # Use entrypoint to clear out any inherited junk
+    #    entrypoint: ["kamailio", "-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
+    entrypoint: /bin/sh -c "mkdir -p /var/run/kamailio && chown kamailio:kamailio /var/run/kamailio && exec kamailio -DD -E -f /etc/kamailio/kamailio.cfg"
     environment:
       - DB_URL=mysql://kamailio:kamailio@kamailio-db:3306/kamailio
     ports:
@@ -102,8 +116,10 @@ services:
         condition: service_healthy
     networks:
       - sip_network
+
     healthcheck:
-      test: ["CMD", "kamcmd", "core.ping"]
+      #      test: ["CMD", "kamcmd", "core.ping"]
+      test: ["CMD", "nc", "-z", "localhost", "5060"]
       interval: 10s
       timeout: 5s
       retries: 3

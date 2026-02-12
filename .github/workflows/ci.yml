@@ -98,9 +98,25 @@ jobs:
             sleep 10
           done'
 
-      - name: Final Smoke Test
+      - name: Wait for Services and Final Smoke Test
         run: |
-          echo "Verifying API availability..."
+          echo "Waiting for Kamailio to be healthy..."
+          # Wait up to 60 seconds for Kamailio to report healthy
+          for i in {1..12}; do
+            if docker compose ps | grep kamailio | grep -q "healthy"; then
+              echo "Kamailio is healthy!"
+              break
+            fi
+            echo "Waiting..."
+            sleep 5
+            if [ $i -eq 12 ]; then
+              echo "Error: Kamailio failed to become healthy. Logs:"
+              docker compose logs kamailio
+              exit 1
+            fi
+          done
+
+          echo "Verifying Teleplivo API availability..."
           curl -f http://localhost:8085/actuator/health
 
       - name: Cleanup & Logs on Failure
