@@ -88,3 +88,8 @@ As we proceed, we should look into:
 2. **Persistence:** Ensuring the MariaDB data and Teleswitch recordings folders are correctly mounted to persistent volumes.
 
 **Would you like me to help you draft the specific XML changes for the Teleswitch SIP profiles to lock them into IPv4?**
+# This should now return your FreeSWITCH IP from the DB
+docker exec -it kamailio kamcmd dispatcher.list
+
+# This should show the status of the rtpengine connection
+docker exec -it kamailio kamcmd rtpengine.show all
