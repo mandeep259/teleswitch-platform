@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main, develop]
   push:
-    branches: [main, "kamailio/*"]
+    branches: [main, "feat/*", "kamailio/*"]
 
 jobs:
   quality-gate:
