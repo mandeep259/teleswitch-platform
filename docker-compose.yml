@@ -141,7 +141,7 @@ services:
       - sip_network
     # --- Fix Indentation below ---
     volumes:
-      - ./rtpengine/config:/etc/rtpengine   # Remove :ro if it's there
+      - ./rtpengine/config/rtpengine.conf.template:/etc/rtpengine/rtpengine.conf.template   # Remove :ro if it's there
       - ./rtpengine/scripts:/usr/local/bin
     entrypoint: /usr/local/bin/entrypoint.sh
 

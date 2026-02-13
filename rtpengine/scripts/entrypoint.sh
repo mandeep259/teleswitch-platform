@@ -3,16 +3,20 @@ set -e
 
 echo "=== Preparing RTPengine Configuration ==="
 
-# Replace the variable string $EXTERNAL_SIP_IP with the actual env value in the config file
-# We use a temporary file to avoid stream issues
+TEMPLATE="/etc/rtpengine/rtpengine.conf.template"
+CONFIG="/etc/rtpengine/rtpengine.conf"
+
+# Copy template to active config
+cp "$TEMPLATE" "$CONFIG"
+
+# Replace the variable
 if [ -n "$EXTERNAL_SIP_IP" ]; then
-    echo "Setting External IP to: $EXTERNAL_SIP_IP"
-    sed -i "s/\$EXTERNAL_SIP_IP/$EXTERNAL_SIP_IP/g" /etc/rtpengine/rtpengine.conf
+    echo "Injecting External IP: $EXTERNAL_SIP_IP"
+    sed -i "s/\$EXTERNAL_SIP_IP/$EXTERNAL_SIP_IP/g" "$CONFIG"
 else
-    echo "WARNING: EXTERNAL_SIP_IP not set, defaulting to 127.0.0.1"
-    sed -i "s/\$EXTERNAL_SIP_IP/127.0.0.1/g" /etc/rtpengine/rtpengine.conf
+    echo "Using default 127.0.0.1"
+    sed -i "s/\$EXTERNAL_SIP_IP/127.0.0.1/g" "$CONFIG"
 fi
 
 echo "=== Starting RTPengine ==="
-# -f keeps it in the foreground so Docker can manage the process
-exec rtpengine -f --config-file=/etc/rtpengine/rtpengine.conf
+exec rtpengine -f --config-file="$CONFIG"
