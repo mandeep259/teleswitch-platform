@@ -111,6 +111,8 @@ services:
     ports:
       - "5060:5060/udp"
       - "5060:5060/tcp"
+    volumes:
+      - ./kamailio/config/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro
     depends_on:
       kamailio-db:
         condition: service_healthy
@@ -119,10 +121,12 @@ services:
 
     healthcheck:
       #      test: ["CMD", "kamcmd", "core.ping"]
-      test: ["CMD", "nc", "-z", "localhost", "5060"]
+      #      test: ["CMD", "nc", "-z", "localhost", "5060"]
+      test: ["CMD", "kamcmd", "core.ping"]
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 10s
 
   rtpengine:
     image: ${RTPENGINE_IMAGE:-rtpengine:latest}
