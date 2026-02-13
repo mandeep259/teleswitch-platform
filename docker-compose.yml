@@ -129,16 +129,22 @@ services:
     build: ./rtpengine
     container_name: rtpengine
     restart: unless-stopped
-    privileged: true # Required for kernel packet manipulation
+    privileged: true
     cap_add:
       - NET_ADMIN
     environment:
       - EXTERNAL_SIP_IP=${EXTERNAL_SIP_IP:-127.0.0.1}
     ports:
       - "22222:22222/udp"
-      - "30000-30005:30000-30005/udp" # Limited range for testing
+      - "30000-30005:30000-30005/udp"
     networks:
       - sip_network
+    # --- Fix Indentation below ---
+    volumes:
+      - ./rtpengine/config:/etc/rtpengine   # Remove :ro if it's there
+      - ./rtpengine/scripts:/usr/local/bin
+    entrypoint: /usr/local/bin/entrypoint.sh
+
 
 networks:
   sip_network:
