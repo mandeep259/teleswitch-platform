@@ -92,7 +92,7 @@ jobs:
         run: |
           echo "Waiting for Services (Teleswitch, Teleplivo, Kamailio-DB) health status..."
           timeout 180s bash -c '
-          until [ "$(docker inspect -f {{.State.Health.Status}} teleswitch_alma_new)" == "healthy" ] && \
+          until [ "$(docker inspect -f {{.State.Health.Status}} teleswitch)" == "healthy" ] && \
                 [ "$(docker inspect -f {{.State.Health.Status}} teleplivo)" == "healthy" ] && \
                 [ "$(docker inspect -f {{.State.Health.Status}} kamailio-db)" == "healthy" ]; do
             sleep 10
