@@ -124,6 +124,22 @@ services:
       timeout: 5s
       retries: 3
 
+  rtpengine:
+    image: ${RTPENGINE_IMAGE:-rtpengine:latest}
+    build: ./rtpengine
+    container_name: rtpengine
+    restart: unless-stopped
+    privileged: true # Required for kernel packet manipulation
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - EXTERNAL_SIP_IP=${EXTERNAL_SIP_IP:-127.0.0.1}
+    ports:
+      - "22222:22222/udp"
+      - "30000-30005:30000-30005/udp" # Limited range for testing
+    networks:
+      - sip_network
+
 networks:
   sip_network:
     driver: bridge

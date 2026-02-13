@@ -31,7 +31,7 @@ jobs:
     strategy:
       matrix:
         # Added kamailio to the build matrix
-        service: [teleswitch, teleplivo, kamailio]
+        service: [teleswitch, teleplivo, kamailio, rtpengine]
     steps:
       - uses: actions/checkout@v4
       - name: Log in to GHCR
@@ -84,6 +84,7 @@ jobs:
           echo "TELESWITCH_IMAGE=ghcr.io/${REPO_LOWER}/teleswitch:sha-${SHORT_SHA}" >> .env
           echo "TELEPLIVO_IMAGE=ghcr.io/${REPO_LOWER}/teleplivo:sha-${SHORT_SHA}" >> .env
           echo "KAMAILIO_IMAGE=ghcr.io/${REPO_LOWER}/kamailio:sha-${SHORT_SHA}" >> .env
+          echo "RTPENGINE_IMAGE=ghcr.io/${REPO_LOWER}/rtpengine:sha-${SHORT_SHA}" >> .env
 
       - name: Start Stack
         run: docker compose up -d
